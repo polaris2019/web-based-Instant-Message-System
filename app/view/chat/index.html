@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{$page_title|default='Chat'}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: #1a237e; /* 深蓝色 */
+            padding: 0.5rem 1rem;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            width: 90%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-brand:hover {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+        }
+
+        .navbar-text {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .btn-logout {
+            padding: 0.375rem 0.75rem;
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.6);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-color: white;
+        }
+
+        .main-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 90%;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            height: calc(85vh - 60px);
+        }
+
+        .users-list {
+            width: 300px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            background-color: white;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            padding: 15px;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            background-color: white;
+            border-top-right-radius: 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #dee2e6;
+            background-color: white;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            position: relative;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+            border-radius: 4px;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+        }
+
+        .input-group .btn {
+            height: 38px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            margin-bottom: 10px;
+            z-index: 1000;
+        }
+
+        .emoji-picker .emoji-mart {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #emojiButton, .btn-primary {
+            min-height: 38px;
+            height: auto !important;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px;
+            max-width: 80%;
+            position: relative;
+        }
+
+        .message.sent {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+
+        .message.received .message-avatar {
+            background-color: #6c757d;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            word-wrap: break-word;
+            max-width: calc(100% - 100px);
+        }
+
+        .message.sent .message-content {
+            background-color: #007bff;
+            color: white;
+            border-top-right-radius: 5px;
+        }
+
+        .message.received .message-content {
+            background-color: #e9ecef;
+            color: #212529;
+            border-top-left-radius: 5px;
+        }
+
+        .time {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message.sent .time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message.received .time {
+            color: #6c757d;
+            text-align: left;
+        }
+
+        .user-item {
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .user-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-item.active {
+            background-color: #e9ecef;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            position: relative;
+        }
+
+        .user-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+
+        .user-status.online {
+            background-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+
+        .user-status.offline {
+            background-color: #dc3545;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-status-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .unread-count {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn:active {
+            background-color: #004085;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .users-list {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="#" class="navbar-brand">IM Chat</a>
+            <div class="navbar-right">
+                <span class="navbar-text">Welcome, {$user['username']}</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="container">
+            <div class="users-list" id="userList">
+                <!-- Users will be dynamically added here -->
+            </div>
+            <div class="chat-container">
+                <div class="chat-header" id="chatHeader">
+                    <h5 class="m-0" id="currentChatUser"></h5>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be dynamically added here -->
+                </div>
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="messageInput" placeholder="Type your message...">
+                        <button class="btn btn-outline-secondary" type="button" id="emojiButton">
+                            <i class="far fa-smile"></i>
+                        </button>
+                        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.js" type="module"></script>
+    <script>
+        let currentUser = null;
+        let currentChatUser = null;
+        let lastMessageTime = '1970-01-01 08:00:00';
+        let messageUpdateInterval = null;
+        const UPDATE_INTERVAL = 2000; // 2秒检查一次新消息
+
+        // 初始化
+        $(document).ready(function() {
+            // 获取当前用户信息
+            currentUser = {
+                id: {$user['id']},
+                username: "{$user['username']}"
+            };
+            console.log('Current user:', currentUser);
+
+            // 开始加载在线用户
+            loadOnlineUsers();
+            // 定期刷新在线用户列表
+            setInterval(loadOnlineUsers, 10000);
+
+            // 初始化表情选择器
+            initEmojiPicker();
+
+            // Handle enter key in message input
+            $('#messageInput').keypress(function(e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // 点击其他地方时关闭表情选择器
+            $(document).click(function(e) {
+                if (!$(e.target).closest('#emojiButton, .emoji-picker').length) {
+                    $('.emoji-picker').remove();
+                }
+            });
+        });
+
+        // 初始化表情选择器
+        function initEmojiPicker() {
+            $('#emojiButton').click(function() {
+                // 如果表情选择器已经存在，则移除它
+                if ($('.emoji-picker').length) {
+                    $('.emoji-picker').remove();
+                    return;
+                }
+
+                // 创建表情选择器
+                const picker = document.createElement('emoji-picker');
+                picker.classList.add('emoji-picker');
+                $(this).parent().append(picker);
+
+                // 监听表情选择事件
+                picker.addEventListener('emoji-click', event => {
+                    const messageInput = document.getElementById('messageInput');
+                    const emoji = event.detail.unicode;
+                    const start = messageInput.selectionStart;
+                    const end = messageInput.selectionEnd;
+                    const text = messageInput.value;
+                    messageInput.value = text.slice(0, start) + emoji + text.slice(end);
+                    messageInput.setSelectionRange(start + emoji.length, start + emoji.length);
+                    messageInput.focus();
+                    $('.emoji-picker').remove();
+                });
+            });
+        }
+
+        // Select a user to chat with
+        function selectUser(userId, username) {
+            console.log('Selecting user:', userId, username);
+            
+            // 清除之前的定时器
+            if (messageUpdateInterval) {
+                clearInterval(messageUpdateInterval);
+                messageUpdateInterval = null;
+            }
+
+            currentChatUser = {
+                id: userId,
+                username: username
+            };
+
+            // 更新UI
+            $('.user-item').removeClass('active');
+            $(`.user-item[data-user-id="${userId}"]`).addClass('active');
+            $('#currentChatUser').text(username);
+            $('#chatHeader').removeClass('d-none');
+            $('#chatMessages').empty();
+            
+            // 重置最后消息时间
+            lastMessageTime = '1970-01-01 08:00:00';
+            
+            // 加载消息
+            loadMessages();
+
+            // 启动新的消息检查
+            messageUpdateInterval = setInterval(function() {
+                if (currentChatUser && currentChatUser.id === userId) {
+                    checkNewMessages();
+                }
+            }, UPDATE_INTERVAL);
+        }
+
+        // Load messages for the selected chat
+        function loadMessages() {
+            if (!currentChatUser) {
+                console.log('No user selected');
+                return;
+            }
+            
+            console.log('Loading messages for user:', currentChatUser);
+            $.get(`/chat/conversation/${currentChatUser.id}`, function(response) {
+                console.log('Received response:', response);
+                if (response.code === 1 && response.data) {
+                    let messages = response.data;
+                    console.log('Messages:', messages);
+                    if (messages && messages.length > 0) {
+                        displayMessages(messages);
+                        // 更新最后消息时间
+                        lastMessageTime = messages[messages.length - 1].create_time;
+                        console.log('Set lastMessageTime to:', lastMessageTime);
+                    } else {
+                        console.log('No messages found');
+                        $('#chatMessages').empty(); // 清空消息区域
+                    }
+                } else {
+                    console.error('Failed to load messages:', response);
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Ajax error:', textStatus, errorThrown);
+            });
+        }
+
+        // Display messages in the chat window
+        function displayMessages(messages) {
+            console.log('Displaying messages:', messages);
+            if (!messages || messages.length === 0) {
+                console.log('No messages to display');
+                return;
+            }
+
+            let messageHtml = '';
+            messages.forEach(function(msg) {
+                console.log('Processing message:', msg);
+                let isSent = msg.sender_id === currentUser.id;
+                let messageClass = isSent ? 'sent' : 'received';
+                let messageDate = new Date(msg.create_time);
+                let time = messageDate.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+
+                // 获取发送者的头像缩写
+                let avatarInitials = isSent ? 
+                    getInitials(currentUser.username) : 
+                    getInitials(currentChatUser.username);
+
+                messageHtml += `
+                    <div class="message ${messageClass}" data-message-id="${msg.id}" data-time="${msg.create_time}">
+                        <div class="message-avatar">${avatarInitials}</div>
+                        <div class="message-content">
+                            ${msg.content}
+                            <div class="time">${time}</div>
+                        </div>
+                    </div>`;
+            });
+            
+            let chatMessages = $('#chatMessages');
+            let wasAtBottom = chatMessages[0].scrollHeight - chatMessages.scrollTop() <= chatMessages.outerHeight() + 100;
+            
+            // 追加新消息
+            chatMessages.append(messageHtml);
+
+            // 如果之前在底部，滚动到底部
+            if (wasAtBottom) {
+                scrollToBottom();
+            }
+        }
+
+        // Check for new messages
+        function checkNewMessages() {
+            if (!currentChatUser) {
+                console.log('No user selected for updates');
+                return;
+            }
+
+            console.log('Checking for new messages after:', lastMessageTime);
+            $.get('/chat/updates', {
+                last_check: lastMessageTime,
+                user_id: currentChatUser.id
+            }, function(response) {
+                console.log('Updates response:', response);
+                if (response.code === 1 && response.data && response.data.messages) {
+                    let newMessages = response.data.messages;
+                    console.log('New messages count:', newMessages.length);
+                    
+                    // 只在有新消息时更新显示
+                    if (newMessages && newMessages.length > 0) {
+                        // 过滤掉已显示的消息
+                        let uniqueNewMessages = newMessages.filter(msg => {
+                            return !$(`.message[data-message-id="${msg.id}"]`).length;
+                        });
+                        
+                        console.log('Unique new messages count:', uniqueNewMessages.length);
+                        if (uniqueNewMessages.length > 0) {
+                            displayMessages(uniqueNewMessages);
+                            // 更新最后消息时间为最新消息的时间
+                            lastMessageTime = uniqueNewMessages[uniqueNewMessages.length - 1].create_time;
+                            console.log('Updated lastMessageTime to:', lastMessageTime);
+                        }
+                    }
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Update check error:', textStatus, errorThrown);
+            });
+        }
+
+        // Send a message
+        function sendMessage() {
+            if (!currentChatUser) {
+                alert('Please select a user to chat with first.');
+                return;
+            }
+
+            let content = $('#messageInput').val().trim();
+            if (!content) return;
+
+            console.log('Sending message to:', currentChatUser.id, content);
+            $.ajax({
+                url: '/message/send',
+                type: 'POST',
+                data: {
+                    receiver_id: currentChatUser.id,
+                    content: content
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Send response:', response);
+                    if (response.code === 1) {
+                        $('#messageInput').val('');
+                        let msg = response.data;
+                        displayMessages([msg]);
+                        lastMessageTime = msg.create_time;
+                        console.log('Updated lastMessageTime after send:', lastMessageTime);
+                    } else {
+                        alert(response.msg || 'Failed to send message');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Send error:', error);
+                    alert('Failed to send message: ' + error);
+                }
+            });
+        }
+
+        // Load online users
+        function loadOnlineUsers() {
+            $.get('/chat/online-users', function(response) {
+                if (response.code === 1) {
+                    let users = response.data;
+                    let userListHtml = '';
+                    users.forEach(function(user) {
+                        if (user.id === currentUser.id) return; // Skip current user
+                        
+                        let initials = getInitials(user.username);
+                        // 检查status属性是否为'online'
+                        let isOnline = user.status === 'online';
+                        let statusClass = isOnline ? 'online' : 'offline';
+                        let statusText = isOnline ? 'Online' : 'Offline';
+                        
+                        console.log('User:', user.username, 'Status:', user.status, 'IsOnline:', isOnline);
+                        
+                        userListHtml += `
+                            <div class="user-item" data-user-id="${user.id}" onclick="selectUser(${user.id}, '${user.username}')">
+                                <div class="user-avatar">
+                                    ${initials}
+                                    <div class="user-status ${statusClass}"></div>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name">${user.username}</div>
+                                    <div class="user-status-text">${statusText}</div>
+                                </div>
+                                ${user.unread_count ? `<div class="unread-count">${user.unread_count}</div>` : ''}
+                            </div>`;
+                    });
+                    $('#userList').html(userListHtml);
+                    
+                    // 如果当前有选中的用户，保持选中状态
+                    if (currentChatUser) {
+                        $(`.user-item[data-user-id="${currentChatUser.id}"]`).addClass('active');
+                    }
+                }
+            });
+        }
+
+        // 获取用户名首字母缩写
+        function getInitials(username) {
+            if (!username) return '??';
+            
+            // 移除首尾空格
+            username = username.trim();
+            
+            // 如果用户名包含空格，取每个单词的首字母
+            if (username.includes(' ')) {
+                return username
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase())
+                    .join('')
+                    .slice(0, 2);
+            }
+            
+            // 如果是单个单词或连续字母，取前两个字母
+            return username.slice(0, 2).toUpperCase();
+        }
+
+        // 生成用户头像的函数
+        function generateInitialsAvatar(username) {
+            let initials;
+            if (username.includes(' ')) {
+                // 如果用户名包含空格，取每个单词的首字母
+                initials = username.split(' ')
+                    .map(name => name.charAt(0))
+                    .join('')
+                    .toUpperCase();
+            } else {
+                // 如果是单个词，直接取前两个字母
+                initials = username.substring(0, 2).toUpperCase();
+            }
+            return `<div class="user-avatar">${initials}</div>`;
+        }
+
+        function scrollToBottom() {
+            let chatMessages = $('#chatMessages');
+            chatMessages.scrollTop(chatMessages[0].scrollHeight);
+        }
+
+        function logout() {
+            $.ajax({
+                url: '/user/logout',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.code === 1) {
+                        // 清除定时器
+                        if (messageUpdateInterval) {
+                            clearInterval(messageUpdateInterval);
+                        }
+                        // 重定向到登录页面
+                        window.location.href = response.redirect;
+                    } else {
+                        alert(response.msg || 'Logout failed');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Logout error:', error);
+                    alert('Logout failed: ' + error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
